@@ -26,7 +26,7 @@ Two parts:
 2. Under **Authorized redirect URIs**, add both of these addresses:
    - `http://localhost:5173/`
    - the app's online address, once it is online (step 6)
-3. Copy the **Client ID** and **Client secret** into `app\config.js`.
+3. Copy `app\config.example.js` to `app\config.js`, then put the **Client ID** and **Client secret** in it. Git ignores `config.js`, so the secret never goes to GitHub.
 
 ## 4. Set up the downloader
 

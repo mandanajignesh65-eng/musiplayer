@@ -2,7 +2,7 @@
 import json
 import re
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import imageio_ffmpeg
 import requests
@@ -39,6 +39,13 @@ def list_link(url):
 
 
 def _list_youtube(url):
+    # A link to one video already holds its id, so it needs no call to YouTube. This keeps big syncs fast.
+    parsed = urlparse(url)
+    query = parse_qs(parsed.query)
+    if "list" not in query:
+        video_id = query.get("v", [None])[0] or (parsed.path.strip("/") if "youtu.be" in parsed.netloc else None)
+        if video_id and re.fullmatch(r"[\w-]{11}", video_id):
+            return None, [{"key": f"yt:{video_id}", "video_id": video_id}]
     with yt_dlp.YoutubeDL({**YDL_BASE, "extract_flat": "in_playlist"}) as ydl:
         info = ydl.extract_info(url, download=False)
     if info.get("_type") == "playlist":
