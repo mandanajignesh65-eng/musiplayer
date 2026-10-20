@@ -105,6 +105,10 @@ def download(video_id, out_dir):
         "ffmpeg_location": imageio_ffmpeg.get_ffmpeg_exe(),
         "writethumbnail": True,
         "noplaylist": True,
+        # Pauses between songs, so YouTube does not mistake a big sync for a bot.
+        "sleep_interval": 4,
+        "max_sleep_interval": 10,
+        "sleep_interval_requests": 1,
         "postprocessors": [
             {"key": "FFmpegExtractAudio", "preferredcodec": "m4a"},
             {"key": "FFmpegThumbnailsConvertor", "format": "jpg"},

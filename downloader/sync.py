@@ -47,7 +47,9 @@ def run_sync(drive, on_progress=lambda status: None, log=print):
 
     with tempfile.TemporaryDirectory(prefix="musicsync-") as tmp:
         for link, name, items in plans:
-            folder_id = drive.folder(safe_name(name or SINGLES), drive.root())
+            # A link to one song goes in the group named in the app ("# Focus" above it), or in Singles.
+            playlist_name = name or link.get("group") or SINGLES
+            folder_id = drive.folder(safe_name(playlist_name), drive.root())
             keys = []
             for item in items:
                 label = item.get("title") or item.get("video_id")
@@ -62,10 +64,14 @@ def run_sync(drive, on_progress=lambda status: None, log=print):
                         drive.write_json("library.json", lib)
                 except Exception as err:
                     log(traceback.format_exc())
+                    if "not a bot" in str(err):
+                        # YouTube is blocking this PC for a while. Going on would only make the block longer.
+                        raise RuntimeError("YouTube asked to confirm you're not a bot, so the sync stopped. "
+                                           "Songs done so far are saved. Press Sync again in a few hours.") from err
                     fail(link["url"], label, err)
                     status["done"] += 1
                     on_progress(status)
-            entry = {"sourceId": link["id"], "url": link["url"], "name": name or SINGLES,
+            entry = {"sourceId": link["id"], "url": link["url"], "name": playlist_name,
                      "single": name is None, "tracks": keys}
             lib["playlists"] = [p for p in lib["playlists"] if p["sourceId"] != link["id"]] + [entry]
             lib["updatedAt"] = now()

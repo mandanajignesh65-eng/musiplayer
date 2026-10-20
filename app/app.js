@@ -65,8 +65,10 @@ async function loadLibrary() {
   state.byId = new Map(state.tracks.map((t) => [t.id, t]));
   const known = (ids) => ids.filter((id) => state.byId.has(id));
   state.playlists = lib.playlists.filter((p) => !p.single).map((p) => ({ id: p.sourceId, name: p.name, tracks: known(p.tracks) }));
-  const singles = [...new Set(lib.playlists.filter((p) => p.single).flatMap((p) => known(p.tracks)))];
-  if (singles.length) state.playlists.push({ id: 'singles', name: 'Singles', tracks: singles });
+  // Links to single songs are grouped by name: "Singles", or the name you typed above them, like "# Focus".
+  const groups = new Map();
+  for (const p of lib.playlists.filter((x) => x.single)) groups.set(p.name, [...(groups.get(p.name) ?? []), ...known(p.tracks)]);
+  for (const [name, ids] of groups) state.playlists.push({ id: `group:${name}`, name, tracks: [...new Set(ids)] });
   state.linkInfo = new Map(lib.playlists.map((p) => [p.sourceId, p]));
 }
 
@@ -175,6 +177,7 @@ function renderAdd() {
   view.innerHTML = `<section class="card">
       <h2>Add songs</h2>
       <p>Paste Spotify, YouTube or YouTube Music links, one per line. Playlists, albums and single songs all work.
+      To group single songs, put a line like <b># Focus</b> above them.
       A saved playlist stays linked: songs you add to it later download on the next sync.</p>
       <textarea id="links-input" rows="4" placeholder="https://open.spotify.com/playlist/…" aria-label="Links to add"></textarea>
       <button class="primary" data-action="add-links">Save links</button>
@@ -208,7 +211,7 @@ function renderSync() {
 
   $('links-list').innerHTML = state.links.length ? state.links.map((l) => {
     const info = state.linkInfo.get(l.id);
-    const label = info ? (info.single ? 'Single song' : `${esc(info.name)} · ${info.tracks.length} songs`) : 'Waiting for sync';
+    const label = info ? (info.single ? `Song · ${esc(info.name)}` : `${esc(info.name)} · ${info.tracks.length} songs`) : 'Waiting for sync';
     return `<li><div><b>${label}</b><small>${esc(l.url)}</small></div>
       <button class="icon" data-remove="${esc(l.id)}" aria-label="Remove link"><svg><use href="#i-x"/></svg></button></li>`;
   }).join('') : '<li class="none">No links saved yet.</li>';
@@ -220,13 +223,24 @@ const LINK = /^https?:\/\/([a-z0-9-]+\.)*(spotify\.com|youtube\.com|youtu\.be)\/
 
 async function addLinks() {
   const input = $('links-input');
-  const urls = [...new Set(input.value.split(/\s+/).filter(Boolean))];
-  const bad = urls.filter((u) => !LINK.test(u));
-  if (!urls.length) return toast('Paste at least one link first.');
-  if (bad.length) return toast(`Not a Spotify or YouTube link: ${bad[0]}`);
+  // A line like "# Focus" puts the single-song links below it into a playlist called Focus.
+  const entries = [];
+  let group = null;
+  for (const line of input.value.split('\n').map((l) => l.trim()).filter(Boolean)) {
+    if (line.startsWith('#')) group = line.replace(/^#+/, '').trim() || null;
+    else for (const url of line.split(/\s+/)) entries.push({ url, group });
+  }
+  const bad = entries.filter((e) => !LINK.test(e.url));
+  if (!entries.length) return toast('Paste at least one link first.');
+  if (bad.length) return toast(`Not a Spotify or YouTube link: ${bad[0].url}`);
   const links = await readJson('sources.json', []); // newest copy, in case another device changed it
   const have = new Set(links.map((l) => l.url));
-  const fresh = urls.filter((u) => !have.has(u)).map((url) => ({ id: crypto.randomUUID(), url, addedAt: new Date().toISOString() }));
+  const fresh = [];
+  for (const { url, group: g } of entries) {
+    if (have.has(url)) continue;
+    have.add(url);
+    fresh.push({ id: crypto.randomUUID(), url, ...(g && { group: g }), addedAt: new Date().toISOString() });
+  }
   await writeJson('sources.json', [...links, ...fresh]);
   state.links = [...links, ...fresh];
   input.value = '';

@@ -2,3 +2,4 @@
 __pycache__/
 downloader/client_secret.json
 downloader/settings.json
+my-youtube-songs.txt
