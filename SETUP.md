@@ -49,10 +49,10 @@ Open http://localhost:5173/, sign in, open **Add songs**, paste a playlist link,
 
 ## 6. Put the app online and install it on Android
 
-The GitHub repository is private, and free GitHub Pages hosting needs a public repository, so the app will be hosted on a free service that works with private repositories, such as Cloudflare Pages. This step is still to do.
+The app is published to GitHub Pages at https://mandanajignesh65-eng.github.io/musiplayer/ by `.github/workflows/pages.yml` whenever `app/` changes on `main`. The workflow writes `config.js` from the repository secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 
-1. Add the app's online address to the web client's **Authorized redirect URIs** (step 3).
-2. Copy `downloader\settings.example.json` to `downloader\settings.json` and fill in the app address. The tray menu's "Open player" then opens it.
+1. In the web client (step 3), add `https://mandanajignesh65-eng.github.io` under **Authorized JavaScript origins** and `https://mandanajignesh65-eng.github.io/musiplayer/` under **Authorized redirect URIs**.
+2. `downloader\settings.json` holds the app address, so the tray menu's "Open player" opens it.
 3. On your Android phone, open the app address in Chrome, then tap **⋮ → Install app** (or **Add to Home screen**).
 
 ## Limits to know
