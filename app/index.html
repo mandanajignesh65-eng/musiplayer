@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Music Player</title>
+  <meta name="theme-color" content="#121110">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 6.3v11.4a1 1 0 0 0 1.55.83L15 12.83a1 1 0 0 0 0-1.66L6.55 5.47A1 1 0 0 0 5 6.3Z"/><rect x="16.5" y="5" width="2.6" height="14" rx="1"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 6.3v11.4a1 1 0 0 1-1.55.83L9 12.83a1 1 0 0 1 0-1.66l8.45-5.7A1 1 0 0 1 19 6.3Z"/><rect x="4.9" y="5" width="2.6" height="14" rx="1"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16 4h4v4M20 4l-6.5 6.5M4 20l6-6M16 20h4v-4M20 20 4 4"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M20 11a8 8 0 0 0-14.7-3.9M4 4v4h4M4 13a8 8 0 0 0 14.7 3.9M20 20v-4h-4"/></symbol>
+  </svg>
+
+  <section id="signin" class="signin" hidden>
+    <img src="icon-192.png" alt="" width="72" height="72">
+    <h1>Music Player</h1>
+    <p>Plays the songs saved in the <b>Music Player</b> folder of your Google Drive.</p>
+    <button id="signin-btn" class="primary">Sign in with Google</button>
+    <p id="signin-msg" class="msg" role="alert"></p>
+  </section>
+
+  <div id="app" hidden>
+    <header class="top">
+      <div class="search">
+        <input id="search" type="search" placeholder="Search songs or artists" aria-label="Search songs or artists" autocomplete="off">
+      </div>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="songs">Songs</button>
+        <button role="tab" data-tab="playlists">Playlists</button>
+        <button role="tab" data-tab="add">Add songs</button>
+      </nav>
+    </header>
+
+    <main id="view"></main>
+
+    <footer id="mini" class="mini" hidden>
+      <div class="mini-progress"><span id="mini-bar"></span></div>
+      <button id="mini-open" class="mini-info" aria-label="Open player">
+        <img id="mini-cover" alt="">
+        <span><b id="mini-title"></b><small id="mini-artist"></small></span>
+      </button>
+      <button id="mini-play" class="icon" aria-label="Play"><svg><use href="#i-play"/></svg></button>
+      <button id="mini-next" class="icon" aria-label="Next song"><svg><use href="#i-next"/></svg></button>
+    </footer>
+  </div>
+
+  <section id="now" class="now" hidden aria-label="Now playing">
+    <button id="now-close" class="icon now-close" aria-label="Close player"><svg><use href="#i-down"/></svg></button>
+    <img id="now-cover" class="now-cover" alt="">
+    <div class="now-text">
+      <h2 id="now-title"></h2>
+      <p id="now-artist"></p>
+    </div>
+    <input id="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="Position in song">
+    <div class="times"><span id="t-now">0:00</span><span id="t-total">0:00</span></div>
+    <div class="controls">
+      <button id="btn-shuffle" class="icon toggle" aria-label="Shuffle" aria-pressed="false"><svg><use href="#i-shuffle"/></svg></button>
+      <button id="btn-prev" class="icon" aria-label="Previous song"><svg><use href="#i-prev"/></svg></button>
+      <button id="btn-play" class="icon big" aria-label="Play"><svg><use href="#i-play"/></svg></button>
+      <button id="btn-next" class="icon" aria-label="Next song"><svg><use href="#i-next"/></svg></button>
+      <button id="btn-repeat" class="icon toggle" aria-label="Repeat: off" aria-pressed="false"><svg><use href="#i-repeat"/></svg><i id="repeat-one" hidden>1</i></button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <audio id="audio" preload="auto"></audio>
+</body>
+</html>
